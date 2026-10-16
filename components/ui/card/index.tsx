@@ -1,24 +1,21 @@
-"use client";
-
-import { motion, type HTMLMotionProps } from "framer-motion";
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-const LIFT = {
-  rest: {
-    y: 0,
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
-  },
-  hover: {
-    y: -4,
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
+// Hover lift/glow is handled in CSS (`.rcn-card--hoverable`, `group-hover`)
+// so cards render as plain server-friendly markup with zero runtime JS.
 
 type CardSize = "sm" | "md" | "lg";
 
-interface CardProps extends Omit<HTMLMotionProps<"div">, "children"> {
+function sizeClass(size: CardSize) {
+  return size === "sm"
+    ? "rcn-card-sm"
+    : size === "lg"
+      ? "rcn-card-lg"
+      : "rcn-card-md";
+}
+
+interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   children: ReactNode;
   accentColor?: string;
   noHover?: boolean;
@@ -35,29 +32,19 @@ export function Card({
   ...props
 }: CardProps) {
   return (
-    <motion.div
-      variants={noHover ? undefined : LIFT}
-      initial={noHover ? undefined : "rest"}
-      whileHover={noHover ? undefined : "hover"}
+    <div
       className={cn(
-        "rcn-card",
-        size === "sm"
-          ? "rcn-card-sm"
-          : size === "lg"
-            ? "rcn-card-lg"
-            : "rcn-card-md",
+        "rcn-card group/card",
+        sizeClass(size),
         noHover ? "" : "rcn-card--hoverable",
         "relative overflow-hidden",
         className,
       )}
       {...props}>
       {!noHover && (
-        <motion.div
-          className="pointer-events-none absolute inset-0"
-          variants={{
-            rest: { opacity: 0 },
-            hover: { opacity: 1 },
-          }}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
           style={{
             background: `radial-gradient(500px circle at 50% -20%, ${accentColor}, transparent 70%)`,
           }}
@@ -65,11 +52,12 @@ export function Card({
       )}
 
       <div className="relative">{children}</div>
-    </motion.div>
+    </div>
   );
 }
 
-interface FeaturedCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
+interface FeaturedCardProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   children: ReactNode;
   from?: string;
   to?: string;
@@ -88,46 +76,41 @@ export function FeaturedCard({
   ...props
 }: FeaturedCardProps) {
   return (
-    <motion.div
-      variants={noHover ? undefined : LIFT}
-      initial={noHover ? undefined : "rest"}
-      whileHover={noHover ? undefined : "hover"}
+    <div
       className={cn(
-        "rcn-card",
-        size === "sm"
-          ? "rcn-card-sm"
-          : size === "lg"
-            ? "rcn-card-lg"
-            : "rcn-card-md",
+        "rcn-card group/card",
+        sizeClass(size),
         noHover ? "" : "rcn-card--hoverable",
         "relative overflow-hidden",
         className,
       )}
       {...props}>
       <div
+        aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={{
           background: `linear-gradient(135deg, ${from}, transparent 50%, ${to})`,
         }}
       />
 
-      <motion.div
-        className="pointer-events-none absolute inset-0"
-        variants={{
-          rest: { opacity: 0.4 },
-          hover: { opacity: noHover ? 0.4 : 1 },
-        }}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 opacity-40 transition-opacity duration-300",
+          noHover ? "" : "group-hover/card:opacity-100",
+        )}
         style={{
           background: `radial-gradient(600px circle at 50% 0%, ${from}, transparent 65%)`,
         }}
       />
 
       <div className="relative">{children}</div>
-    </motion.div>
+    </div>
   );
 }
 
-interface GhostCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
+interface GhostCardProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   children: ReactNode;
   pill?: boolean;
   noHover?: boolean;
@@ -144,16 +127,10 @@ export function GhostCard({
   ...props
 }: GhostCardProps) {
   return (
-    <motion.div
-      whileHover={noHover ? undefined : { scale: 1.03 }}
-      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+    <div
       className={cn(
         "rcn-card",
-        size === "sm"
-          ? "rcn-card-sm"
-          : size === "lg"
-            ? "rcn-card-lg"
-            : "rcn-card-md",
+        sizeClass(size),
         noHover ? "" : "rcn-card--hoverable",
         pill ? "rounded-full" : "",
         "overflow-hidden",
@@ -161,6 +138,6 @@ export function GhostCard({
       )}
       {...props}>
       {children}
-    </motion.div>
+    </div>
   );
 }

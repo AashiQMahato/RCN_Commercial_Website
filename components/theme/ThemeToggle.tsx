@@ -1,7 +1,6 @@
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
@@ -27,23 +26,15 @@ export function ThemeToggle() {
   const label = `Theme: ${theme ?? "system"}`;
 
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={cycle}
       aria-label={label}
       title={label}
-      className="flex h-9 w-9 items-center justify-center rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text-muted))] shadow-sm transition-colors hover:bg-[rgb(var(--surface-2))] hover:text-[rgb(var(--text))]"
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.94 }}>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={theme}
-          initial={{ rotate: -40, opacity: 0, scale: 0.7 }}
-          animate={{ rotate: 0, opacity: 1, scale: 1 }}
-          exit={{ rotate: 40, opacity: 0, scale: 0.7 }}
-          transition={{ duration: 0.18 }}>
-          <Icon className="h-4 w-4" />
-        </motion.span>
-      </AnimatePresence>
-    </motion.button>
+      className="flex h-9 w-9 items-center justify-center rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text-muted))] shadow-sm transition hover:scale-[1.08] hover:bg-[rgb(var(--surface-2))] hover:text-[rgb(var(--text))] active:scale-[0.94]">
+      <span key={theme} className="rcn-theme-icon">
+        <Icon className="h-4 w-4" />
+      </span>
+    </button>
   );
 }

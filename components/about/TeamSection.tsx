@@ -1,7 +1,3 @@
-"use client";
-
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
 import {
   ExternalLink,
   Link,
@@ -13,6 +9,7 @@ import {
 
 import { Container } from "@/components/landing/container";
 import { Card, GhostCard } from "@/components/ui/card";
+import { Reveal } from "@/components/landing/reveal";
 import { cn } from "@/lib/utils";
 
 type TeamMember = {
@@ -71,11 +68,8 @@ function LinkIcon({ type }: { type: TeamMember["links"][number]["type"] }) {
 }
 
 export function TeamSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-120px" });
-
   return (
-    <section ref={ref} id="team" className="relative py-24 sm:py-32">
+    <section id="team" className="relative py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-linear-to-r from-transparent via-[rgb(var(--primary))]/30 to-transparent" />
         <div className="absolute left-10 top-24 h-72 w-72 rounded-full bg-[rgb(var(--primary))]/10 blur-3xl" />
@@ -83,11 +77,7 @@ export function TeamSection() {
       </div>
 
       <Container className="relative">
-        <motion.div
-          className="mx-auto mb-14 max-w-2xl text-center"
-          initial={{ opacity: 0, y: 22 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}>
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center" y={22}>
           <GhostCard
             pill
             className="inline-flex items-center gap-2 px-4 py-2"
@@ -108,17 +98,14 @@ export function TeamSection() {
             A small, dedicated team that treats every connection like it matters
             — because it does.
           </p>
-        </motion.div>
+        </Reveal>
 
         <div className="grid gap-6 md:grid-cols-3">
           {TEAM.map((m, i) => (
+            <Reveal key={m.name} delay={i * 0.12} y={35}>
             <Card
-              key={m.name}
               size="md"
-              className="group flex flex-col items-center text-center"
-              initial={{ opacity: 0, y: 35 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.12, duration: 0.6 }}>
+              className="group flex h-full flex-col items-center text-center">
               <div className="relative">
                 <div className="mb-6 flex items-center gap-3">
                   <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[rgb(var(--primary))]/25 bg-[rgb(var(--primary))]/12 text-[rgb(var(--primary))] transition-transform duration-300 group-hover:scale-110">
@@ -142,23 +129,22 @@ export function TeamSection() {
                   {m.links
                     .filter((l) => l.href && l.href !== "#")
                     .map((l) => (
-                      <motion.a
+                      <a
                         key={l.type}
                         href={l.href}
                         aria-label={`${m.name} ${l.type}`}
                         className={cn(
                           "inline-flex h-10 w-10 items-center justify-center rounded-xl",
                           "border border-[rgb(var(--primary))]/18 bg-[rgb(var(--surface))]/55 text-[rgb(var(--text-muted))]",
-                          "backdrop-blur-md transition-colors hover:border-[rgb(var(--primary))]/40 hover:text-[rgb(var(--primary))]",
-                        )}
-                        whileHover={{ scale: 1.06 }}
-                        whileTap={{ scale: 0.96 }}>
+                          "backdrop-blur-md transition-colors hover:border-[rgb(var(--primary))]/40 hover:text-[rgb(var(--primary))] hover:scale-[1.06] active:scale-[0.96]",
+                        )}>
                         <LinkIcon type={l.type} />
-                      </motion.a>
+                      </a>
                     ))}
                 </div>
               </div>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Container>

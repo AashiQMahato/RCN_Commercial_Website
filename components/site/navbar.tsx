@@ -4,12 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 import { Container } from "@/components/landing/container";
@@ -39,8 +33,12 @@ export function Navbar() {
   const [open, setOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
 
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 8));
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   React.useEffect(() => {
     setOpen(false);
@@ -66,23 +64,22 @@ export function Navbar() {
         <Container className="flex h-17 items-center justify-between gap-3">
           <Link
             href="/"
-            className="flex items-center gap-3"
-            aria-label={business.company.name}>
+            className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg border-[1.5px] border-[rgb(var(--primary))] bg-[rgb(var(--primary))]/12">
               <Image
-                src="/favicon.ico"
-                alt={`${business.company.name} Logo`}
+                src="/logo.webp"
+                alt=""
                 width={32}
                 height={32}
                 className="h-8 w-8 rounded-lg"
-                priority
+                unoptimized
               />
             </span>
             <div className="leading-tight">
               <div className="rcn-mono text-sm font-semibold tracking-wide text-[rgb(var(--text))]">
                 {business.company.shortName}
               </div>
-              <div className="hidden text-xs sm:block w-max">
+              <div className="hidden w-max text-xs text-[rgb(var(--text-muted))] sm:block">
                 {business.company.name}
               </div>
             </div>
@@ -133,13 +130,10 @@ export function Navbar() {
         </Container>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="fixed inset-0 z-50 lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+      {open && (
+          <div
+            className="rcn-enter fixed inset-0 z-50 lg:hidden"
+            style={{ ["--enter-y" as string]: "0px", animationDuration: "0.2s" }}>
             <button
               type="button"
               aria-label="Close menu"
@@ -147,12 +141,9 @@ export function Navbar() {
               onClick={() => setOpen(false)}
             />
 
-            <motion.aside
-              className="absolute right-0 top-0 h-full w-[min(360px,92vw)] border-l border-[rgb(var(--primary))]/12 bg-[rgb(var(--bg))]/97 p-5 backdrop-blur-xl"
-              initial={{ x: 40, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 40, opacity: 0 }}
-              transition={{ duration: 0.2 }}>
+            <aside
+              aria-label="Mobile navigation"
+              className="absolute right-0 top-0 h-full w-[min(360px,92vw)] border-l border-[rgb(var(--primary))]/12 bg-[rgb(var(--bg))]/97 p-5 backdrop-blur-xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ThemeToggle />
@@ -171,11 +162,13 @@ export function Navbar() {
                 {NAV_ITEMS.map((item, i) => {
                   const active = isActive(pathname, item.href);
                   return (
-                    <motion.div
+                    <div
                       key={item.href}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}>
+                      className="rcn-enter"
+                      style={{
+                        ["--enter-y" as string]: "6px",
+                        ["--enter-delay" as string]: `${i * 0.03}s`,
+                      }}>
                       <Link
                         href={item.href}
                         className={
@@ -187,7 +180,7 @@ export function Navbar() {
                         }>
                         {t(lang, item.key)}
                       </Link>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -200,10 +193,9 @@ export function Navbar() {
                   {t(lang, "ctaGetConnected")}
                 </Link>
               </div>
-            </motion.aside>
-          </motion.div>
+            </aside>
+          </div>
         )}
-      </AnimatePresence>
     </header>
   );
 }

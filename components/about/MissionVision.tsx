@@ -1,11 +1,8 @@
-"use client";
-
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
 import { Eye, Heart, Target } from "lucide-react";
 
 import { Container } from "@/components/landing/container";
 import { Card, GhostCard } from "@/components/ui/card";
+import { Reveal } from "@/components/landing/reveal";
 import { cn } from "@/lib/utils";
 
 type CardDef = {
@@ -37,21 +34,14 @@ const CARDS: CardDef[] = [
 ];
 
 export function MissionVision() {
-  const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
-
   return (
-    <section ref={ref} id="mission" className="relative py-24 sm:py-32">
+    <section id="mission" className="relative py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-linear-to-r from-transparent via-[rgb(var(--primary))]/30 to-transparent" />
       </div>
 
       <Container>
-        <motion.div
-          className="mx-auto mb-16 max-w-2xl text-center"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}>
+        <Reveal className="mx-auto mb-16 max-w-2xl text-center" y={30}>
           <GhostCard
             pill
             className="inline-flex items-center gap-2 px-4 py-2"
@@ -67,17 +57,12 @@ export function MissionVision() {
               our community
             </span>
           </h2>
-        </motion.div>
+        </Reveal>
 
         <div className="grid gap-6 md:grid-cols-3">
           {CARDS.map((card, i) => (
-            <Card
-              key={card.title}
-              size="md"
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.12, duration: 0.6 }}
-              className="group h-full">
+            <Reveal key={card.title} delay={i * 0.12} y={40}>
+            <Card size="md" className="group h-full">
               <div
                 className={cn(
                   "mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl",
@@ -105,6 +90,7 @@ export function MissionVision() {
                 ))}
               </div>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Container>

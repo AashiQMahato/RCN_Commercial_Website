@@ -1,7 +1,3 @@
-"use client";
-
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
 import {
   Award,
   Cable,
@@ -15,6 +11,7 @@ import {
 
 import { Container } from "@/components/landing/container";
 import { Card, GhostCard } from "@/components/ui/card";
+import { Reveal } from "@/components/landing/reveal";
 import { cn } from "@/lib/utils";
 
 const EVENTS = [
@@ -79,21 +76,16 @@ const EVENTS = [
 type EventDef = (typeof EVENTS)[number];
 
 function TimelineItem({ event, index }: { event: EventDef; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
   const isLeft = index % 2 === 0;
 
   return (
-    <motion.div
-      ref={ref}
+    <Reveal
+      y={24}
       className={`relative flex items-start gap-8 ${
         isLeft ? "flex-row" : "flex-row-reverse"
-      } md:gap-12`}
-      initial={{ opacity: 0, x: isLeft ? -40 : 40 }}
-      animate={inView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.6, ease: [0.215, 0.61, 0.355, 1] }}>
+      } md:gap-12`}>
       <div className={`flex-1 ${isLeft ? "text-right" : "text-left"}`}>
-        <Card className="inline-block p-6 text-left" whileHover={{ y: -6 }}>
+        <Card className="inline-block p-6 text-left">
           <div
             className={cn(
               "mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br shadow-md",
@@ -115,36 +107,23 @@ function TimelineItem({ event, index }: { event: EventDef; index: number }) {
       </div>
 
       <div className="relative flex flex-col items-center">
-        <motion.div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br ${event.color} shadow-lg`}
-          initial={{ scale: 0 }}
-          animate={inView ? { scale: 1 } : {}}
-          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}>
+        <div
+          aria-hidden="true"
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br ${event.color} shadow-lg`}>
           <event.icon className="h-5 w-5 text-white" />
-        </motion.div>
+        </div>
       </div>
 
       <div className="flex-1" />
-    </motion.div>
+    </Reveal>
   );
 }
 
 export function Timeline() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start 80%", "end 20%"],
-  });
-  const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
-
   return (
-    <section ref={sectionRef} id="history" className="relative py-24 sm:py-32">
+    <section id="history" className="relative py-24 sm:py-32">
       <Container>
-        <motion.div
-          className="mx-auto mb-16 max-w-2xl text-center"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}>
+        <Reveal className="mx-auto mb-16 max-w-2xl text-center" y={30}>
           <GhostCard
             pill
             className="inline-flex items-center gap-2 px-4 py-2"
@@ -160,15 +139,12 @@ export function Timeline() {
               connecting lives
             </span>
           </h2>
-        </motion.div>
+        </Reveal>
 
         <div className="relative">
           <div className="absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 overflow-hidden md:block">
             <div className="h-full w-full bg-[rgb(var(--primary))]/12" />
-            <motion.div
-              className="absolute inset-0 bg-linear-to-b from-[rgb(var(--primary))] via-[rgb(var(--cyan))] to-[rgb(var(--primary-deep))]"
-              style={{ scaleY, transformOrigin: "top" }}
-            />
+            <div className="absolute inset-0 bg-linear-to-b from-[rgb(var(--primary))] via-[rgb(var(--cyan))] to-[rgb(var(--primary-deep))] opacity-70" />
           </div>
 
           <div className="flex flex-col gap-12 md:gap-16">

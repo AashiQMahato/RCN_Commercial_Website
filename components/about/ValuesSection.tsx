@@ -1,7 +1,3 @@
-"use client";
-
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
 import {
   Award,
   Headphones,
@@ -14,6 +10,7 @@ import {
 
 import { Container } from "@/components/landing/container";
 import { Card, GhostCard } from "@/components/ui/card";
+import { Reveal } from "@/components/landing/reveal";
 
 type ValueDef = {
   icon: typeof Zap;
@@ -55,20 +52,14 @@ const VALUES: ValueDef[] = [
 ];
 
 export function ValuesSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-
   return (
-    <section ref={ref} id="values" className="relative py-24 sm:py-32">
+    <section id="values" className="relative py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute right-0 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-[rgb(var(--primary))]/8 blur-3xl" />
       </div>
 
       <Container>
-        <motion.div
-          className="mx-auto mb-16 max-w-2xl text-center"
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}>
+        <Reveal className="mx-auto mb-16 max-w-2xl text-center" y={30}>
           <GhostCard
             pill
             className="inline-flex items-center gap-2 px-4 py-2"
@@ -88,17 +79,12 @@ export function ValuesSection() {
             Six values that guide every decision — from network upgrades to
             customer support calls.
           </p>
-        </motion.div>
+        </Reveal>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {VALUES.map((v, i) => (
-            <Card
-              key={v.title}
-              size="md"
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.08, duration: 0.5 }}
-              className="group">
+            <Reveal key={v.title} delay={i * 0.08} y={30}>
+            <Card size="md" className="group h-full">
               <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[rgb(var(--primary))]/25 bg-[rgb(var(--primary))]/12 text-[rgb(var(--primary))] transition-transform duration-300 group-hover:scale-110">
                 <v.icon className="h-5 w-5" />
               </div>
@@ -109,6 +95,7 @@ export function ValuesSection() {
                 {v.desc}
               </p>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Container>

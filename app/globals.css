@@ -43,7 +43,8 @@
 
   --text: 240 253 244;
   --text-muted: 187 247 208;
-  --text-soft: 107 114 128;
+  /* gray-400: keeps ≥4.5:1 contrast on all dark surfaces (WCAG AA) */
+  --text-soft: 156 163 175;
   --text-dim: 55 65 81;
 
   --border: 20 83 45;
@@ -82,6 +83,71 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* ── Entrance animations (CSS only, no JS needed for first paint) ── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--reveal-y, 16px));
+  transition:
+    opacity 0.6s ease-out var(--reveal-delay, 0s),
+    transform 0.6s ease-out var(--reveal-delay, 0s);
+}
+
+[data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Above-the-fold entrance: fades + slides in on load. */
+.rcn-enter {
+  animation: rcn-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--enter-delay, 0s);
+}
+
+/* Slide only (keeps text painted immediately so LCP is not delayed). */
+.rcn-rise {
+  animation: rcn-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--enter-delay, 0s);
+}
+
+@keyframes rcn-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-y, 14px));
+  }
+}
+
+@keyframes rcn-rise {
+  from {
+    transform: translateY(var(--enter-y, 14px));
+  }
+}
+
+.rcn-theme-icon {
+  display: inline-flex;
+  animation: rcn-theme-icon 0.18s ease-out;
+}
+
+@keyframes rcn-theme-icon {
+  from {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .rcn-enter,
+  .rcn-rise {
+    animation: none;
+  }
+}
+
 
 html,
 body {

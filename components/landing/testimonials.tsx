@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { MessageCircle } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Container } from "./container";
 import { Reveal } from "./reveal";
 import { Card } from "@/components/ui/card";
@@ -117,22 +116,18 @@ export function Testimonials() {
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visible.map(({ item, idx }, slot) => (
-                <motion.div
+            {visible.map(({ item, idx }, slot) => (
+                <div
                   key={`${idx}-${slot}`}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}>
+                  className="rcn-enter"
+                  style={{ ["--enter-y" as string]: "12px", animationDuration: "0.35s" }}>
                   <TestimonialCard
                     name={item.name}
                     quote={item.quote}
                     source={item.source}
                   />
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
           </div>
 
           <div className="mt-7 flex justify-center gap-2">
