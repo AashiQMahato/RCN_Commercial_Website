@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/site";
 import { SiteShell } from "@/components/site/site-shell";
 
 import { HeroSection } from "@/components/about/HeroSection";
@@ -9,16 +10,17 @@ import { ValuesSection } from "@/components/about/ValuesSection";
 import { Timeline } from "@/components/about/Timeline";
 import { TeamSection } from "@/components/about/TeamSection";
 
-export const metadata: Metadata = {
-  title: "About | Raghunathpur Cable Network",
+export const metadata: Metadata = pageMetadata({
+  title: "About Us",
   description:
-    "Learn about Raghunathpur Cable Network, our mission, values, and the people building West Bengal's most reliable fiber network.",
-};
+    "Since 2010, Raghunathpur Cable Network has connected Sabaila Municipality and 25+ surrounding areas in Dhanusha, Nepal with fiber internet and cable TV. Meet our team and mission.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (
     <SiteShell>
-      <main className="relative overflow-x-hidden">
+      <div className="relative overflow-x-hidden">
         <HeroSection />
         <StatsCounter />
         <ChairpersonMessage />
@@ -26,7 +28,7 @@ export default function AboutPage() {
         <ValuesSection />
         <Timeline />
         <TeamSection />
-      </main>
+      </div>
     </SiteShell>
   );
 }

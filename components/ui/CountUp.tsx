@@ -70,8 +70,11 @@ export function CountUp({
   }, [durationMs, format, value]);
 
   return (
-    <span ref={ref} aria-label={`${value}${suffix}`} suppressHydrationWarning>
-      {format(0)}
-    </span>
+    <>
+      <span ref={ref} aria-hidden="true" suppressHydrationWarning>
+        {format(0)}
+      </span>
+      <span className="sr-only">{format(value)}</span>
+    </>
   );
 }

@@ -1,15 +1,10 @@
 "use client";
 
 import * as React from "react";
-import {
-  animate,
-  useInView,
-  useMotionValue,
-  useMotionValueEvent,
-} from "framer-motion";
 import { Clock, Globe2, ShieldCheck, Users } from "lucide-react";
 
 import { Container } from "@/components/landing/container";
+import { Reveal } from "@/components/landing/reveal";
 import { Card } from "@/components/ui/card";
 
 type Stat = {
@@ -58,25 +53,41 @@ function formatCount(value: number, target: number) {
 
 function Counter({ target, suffix }: { target: number; suffix: string }) {
   const spanRef = React.useRef<HTMLSpanElement | null>(null);
-  const inView = useInView(spanRef, { once: true, margin: "-80px" });
-
-  const mv = useMotionValue(0);
+  const final = `${formatCount(target, target)}${suffix}`;
 
   React.useEffect(() => {
-    if (!inView) return;
-    const controls = animate(mv, target, {
-      duration: 1.8,
-      ease: [0.16, 1, 0.3, 1],
+    const el = spanRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let raf = 0;
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const step = (now: number) => {
+        const p = Math.min(1, (now - start) / 1800);
+        const eased = 1 - Math.pow(1 - p, 4);
+        el.textContent = `${formatCount(target * eased, target)}${suffix}`;
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
     });
-    return () => controls.stop();
-  }, [inView, mv, target]);
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [target, suffix]);
 
-  useMotionValueEvent(mv, "change", (latest) => {
-    if (!spanRef.current) return;
-    spanRef.current.textContent = `${formatCount(latest, target)}${suffix}`;
-  });
-
-  return <span ref={spanRef} aria-label={`${target}${suffix}`} />;
+  return (
+    <>
+      <span ref={spanRef} aria-hidden="true">
+        {final}
+      </span>
+      <span className="sr-only">{final}</span>
+    </>
+  );
 }
 
 export function StatsCounter() {
@@ -89,14 +100,10 @@ export function StatsCounter() {
       <Container>
         <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
           {STATS.map((stat, i) => (
+            <Reveal key={stat.label} delay={i * 0.1} y={30}>
             <Card
-              key={stat.label}
               size="md"
-              className="flex flex-col items-center gap-3 text-center"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}>
+              className="flex h-full flex-col items-center gap-3 text-center">
               <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[rgb(var(--primary))]/25 bg-[rgb(var(--primary))]/12 text-[rgb(var(--primary))]">
                 <stat.icon className="h-5 w-5" />
               </div>
@@ -107,6 +114,7 @@ export function StatsCounter() {
                 {stat.label}
               </div>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Container>

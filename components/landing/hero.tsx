@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, MapPin, Zap, Shield, Wifi } from "lucide-react";
-import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Reveal } from "@/components/landing/reveal";
+import { CountUp } from "@/components/ui/CountUp";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { t } from "@/lib/i18n";
 
@@ -15,37 +14,6 @@ interface StatItem {
   decimals: number;
   suffix: string;
   label: string;
-}
-
-// ─── CountUp (inline, no external dep needed beyond react) ───────────────────
-
-function CountUp({
-  value,
-  decimals = 0,
-}: {
-  value: number;
-  decimals?: number;
-}) {
-  const [display, setDisplay] = useState(0);
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    let start = 0;
-    const steps = 60;
-    const inc = value / steps;
-    ref.current = setInterval(() => {
-      start += inc;
-      if (start >= value) {
-        setDisplay(value);
-        clearInterval(ref.current!);
-      } else {
-        setDisplay(start);
-      }
-    }, 18);
-    return () => clearInterval(ref.current!);
-  }, [value]);
-
-  return <>{display.toFixed(decimals)}</>;
 }
 
 // ─── Globe ───────────────────────────────────────────────────────────────────
@@ -131,8 +99,14 @@ function GlobeCanvas({ isDark }: { isDark: boolean }) {
     if (!ctx) return;
 
     const SIZE = 460;
-    canvas.width = SIZE;
-    canvas.height = SIZE;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = SIZE * dpr;
+    canvas.height = SIZE * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    let onScreen = true;
     const R = 168;
     const FOV = 460;
 
@@ -467,16 +441,37 @@ function GlobeCanvas({ isDark }: { isDark: boolean }) {
 
       angleRef.current += 0.0025;
       tickRef.current++;
-      frameRef.current = requestAnimationFrame(draw);
+      frameRef.current = 0;
+      schedule();
     };
 
+    // Only animate while the globe is visible and the tab is in the foreground.
+    function schedule() {
+      if (reduceMotion || !onScreen || document.hidden || frameRef.current)
+        return;
+      frameRef.current = requestAnimationFrame(draw);
+    }
+
+    const io = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      schedule();
+    });
+    io.observe(canvas);
+    document.addEventListener("visibilitychange", schedule);
+
     draw();
-    return () => cancelAnimationFrame(frameRef.current);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", schedule);
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+    };
   }, [isDark, toXYZ, rotateY, project]);
 
   return (
     <canvas
       ref={canvasRef}
+      aria-hidden="true"
       style={{
         width: "100%",
         height: "100%",
@@ -513,12 +508,10 @@ const STAT_META = [
 function StatPill({
   stat,
   i,
-  inView,
   isDark,
 }: {
   stat: StatItem;
   i: number;
-  inView: boolean;
   isDark: boolean;
 }) {
   const m = STAT_META[i];
@@ -526,11 +519,11 @@ function StatPill({
   const color = isDark ? m.colorDark : m.colorLight;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18, scale: 0.95 }}
-      animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      transition={{ delay: 0.08 * i, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    <div
+      className="rcn-enter rcn-stat-pill"
       style={{
+        ["--enter-delay" as string]: `${0.4 + 0.08 * i}s`,
+        ["--pill-glow" as string]: `0 8px 28px rgba(${m.accent},${isDark ? 0.22 : 0.16}), inset 0 1px 0 rgba(255,255,255,${isDark ? 0.08 : 0.7})`,
         background: isDark
           ? `rgba(${m.accent},0.08)`
           : `rgba(${m.accent},0.06)`,
@@ -543,12 +536,7 @@ function StatPill({
         alignItems: "center",
         gap: 12,
         boxShadow: `0 4px 20px rgba(${m.accent},${isDark ? 0.12 : 0.08}), inset 0 1px 0 rgba(255,255,255,${isDark ? 0.05 : 0.6})`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         cursor: "default",
-      }}
-      whileHover={{
-        y: -3,
-        boxShadow: `0 8px 28px rgba(${m.accent},${isDark ? 0.22 : 0.16}), inset 0 1px 0 rgba(255,255,255,${isDark ? 0.08 : 0.7})`,
       }}>
       <span
         style={{
@@ -574,11 +562,7 @@ function StatPill({
             lineHeight: 1.1,
             letterSpacing: "-0.02em",
           }}>
-          {inView ? (
-            <CountUp value={stat.value} decimals={stat.decimals} />
-          ) : (
-            "0"
-          )}
+          <CountUp value={stat.value} decimals={stat.decimals} />
           <span style={{ fontSize: "0.78rem", marginLeft: 2, fontWeight: 600 }}>
             {stat.suffix}
           </span>
@@ -595,7 +579,7 @@ function StatPill({
           {stat.label}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -604,9 +588,26 @@ function StatPill({
 export function Hero() {
   const { lang } = useLanguage();
 
-  const statsRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(statsRef, { once: true, margin: "-60px" });
   const [isDark, setIsDark] = useState(true);
+  // The globe is desktop-only decoration: mount it after first paint and
+  // only when the viewport is wide enough to show it.
+  const [showGlobe, setShowGlobe] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 900px)");
+    let timer = 0;
+    const update = () => {
+      window.clearTimeout(timer);
+      if (!mq.matches) return setShowGlobe(false);
+      timer = window.setTimeout(() => setShowGlobe(true), 600);
+    };
+    update();
+    mq.addEventListener("change", update);
+    return () => {
+      mq.removeEventListener("change", update);
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   // Detect system / class theme
   useEffect(() => {
@@ -709,11 +710,10 @@ export function Hero() {
           {/* ── Left ── */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {/* Eyebrow badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            <div
+              className="rcn-enter"
               style={{
+                ["--enter-y" as string]: "-10px",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
@@ -746,10 +746,10 @@ export function Hero() {
                 }}>
                 Raghunathpur Cable Network — Est. 2010
               </span>
-            </motion.div>
+            </div>
 
             {/* H1 */}
-            <Reveal delay={0.08}>
+            <div className="rcn-rise">
               <h1
                 className="mt-5 font-bold leading-[1.05] tracking-tight"
                 style={{
@@ -771,17 +771,11 @@ export function Hero() {
                   {t(lang, "heroHeadlineB")}
                 </em>
               </h1>
-            </Reveal>
+            </div>
 
             {/* Divider line */}
-            <motion.div
-              initial={{ scaleX: 0, opacity: 0 }}
-              animate={{ scaleX: 1, opacity: 1 }}
-              transition={{
-                delay: 0.18,
-                duration: 0.6,
-                ease: [0.22, 1, 0.36, 1],
-              }}
+            <div
+              className="rcn-grow-x"
               style={{
                 height: 2,
                 width: 80,
@@ -793,10 +787,8 @@ export function Hero() {
             />
 
             {/* Sub */}
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.55 }}
+            <p
+              className="rcn-rise"
               style={{
                 marginTop: 20,
                 maxWidth: 460,
@@ -808,14 +800,13 @@ export function Hero() {
               High-speed broadband across the Madhesh Province. Blazing speeds,
               rock-solid reliability, and local 24/7 support — from Sabaila to
               the world.
-            </motion.p>
+            </p>
 
             {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.28, duration: 0.5 }}
+            <div
+              className="rcn-enter"
               style={{
+                ["--enter-delay" as string]: "0.2s",
                 marginTop: 32,
                 display: "flex",
                 flexWrap: "wrap",
@@ -926,14 +917,14 @@ export function Hero() {
                 Check availability
                 <ArrowRight style={{ width: 13, height: 13 }} />
               </Link>
-            </motion.div>
+            </div>
 
             {/* Location chip */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.36 }}
+            <div
+              className="rcn-enter"
               style={{
+                ["--enter-delay" as string]: "0.3s",
+                ["--enter-y" as string]: "0px",
                 marginTop: 20,
                 display: "inline-flex",
                 alignItems: "center",
@@ -955,11 +946,10 @@ export function Hero() {
                 }}>
                 Sabaila, Madhesh Province, Nepal
               </span>
-            </motion.div>
+            </div>
 
             {/* Stats */}
             <div
-              ref={statsRef}
               style={{
                 marginTop: 28,
                 display: "flex",
@@ -971,7 +961,6 @@ export function Hero() {
                   key={i}
                   stat={s}
                   i={i}
-                  inView={inView}
                   isDark={isDark}
                 />
               ))}
@@ -979,21 +968,16 @@ export function Hero() {
           </div>
 
           {/* ══════ RIGHT: GLOBE ══════ */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              delay: 0.15,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="hidden min-[900px]:flex flex-col items-center">
+          <div
+            aria-hidden="true"
+            className="rcn-enter hidden min-[900px]:flex flex-col items-center"
+            style={{ ["--enter-delay" as string]: "0.15s" }}>
             {/* Live badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
+            <div
+              className="rcn-enter"
               style={{
+                ["--enter-delay" as string]: "0.9s",
+                ["--enter-y" as string]: "-10px",
                 alignSelf: "flex-start",
                 marginBottom: 16,
                 display: "inline-flex",
@@ -1045,7 +1029,7 @@ export function Hero() {
                 }}>
                 25+ nodes
               </span>
-            </motion.div>
+            </div>
 
             {/* Globe wrapper */}
             <div
@@ -1095,18 +1079,14 @@ export function Hero() {
               />
 
               {/* Canvas */}
-              <GlobeCanvas isDark={isDark} />
+              {showGlobe ? <GlobeCanvas isDark={isDark} /> : null}
 
               {/* HQ label */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  delay: 1.3,
-                  duration: 0.4,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
+              <div
+                className="rcn-enter"
                 style={{
+                  ["--enter-delay" as string]: "1.3s",
+                  ["--enter-y" as string]: "0px",
                   position: "absolute",
                   top: "35%",
                   left: "60%",
@@ -1146,18 +1126,14 @@ export function Hero() {
                   }}>
                   Sabaila HQ
                 </span>
-              </motion.div>
+              </div>
 
               {/* Latency badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  delay: 1.5,
-                  duration: 0.4,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
+              <div
+                className="rcn-enter"
                 style={{
+                  ["--enter-delay" as string]: "1.5s",
+                  ["--enter-y" as string]: "0px",
                   position: "absolute",
                   bottom: "22%",
                   left: "4%",
@@ -1195,15 +1171,15 @@ export function Hero() {
                   }}>
                   &lt; 8ms latency
                 </span>
-              </motion.div>
+              </div>
             </div>
 
             {/* Legend */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.6, duration: 0.4 }}
+            <div
+              className="rcn-enter"
               style={{
+                ["--enter-delay" as string]: "1.6s",
+                ["--enter-y" as string]: "8px",
                 marginTop: 18,
                 display: "flex",
                 alignItems: "center",
@@ -1244,8 +1220,8 @@ export function Hero() {
                   </span>
                 </div>
               ))}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1254,6 +1230,17 @@ export function Hero() {
         @keyframes heroFloat {
           0%, 100% { transform: translateY(0px); }
           50%       { transform: translateY(-10px); }
+        }
+        @keyframes rcnGrowX {
+          from { transform: scaleX(0); opacity: 0; }
+        }
+        .rcn-grow-x {
+          animation: rcnGrowX 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+        }
+        .rcn-stat-pill { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .rcn-stat-pill:hover { transform: translateY(-3px); box-shadow: var(--pill-glow) !important; }
+        @media (prefers-reduced-motion: reduce) {
+          .rcn-grow-x { animation: none; }
         }
         @keyframes rcn-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }

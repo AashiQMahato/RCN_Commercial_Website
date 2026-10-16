@@ -167,6 +167,7 @@ export function FiberRing3D() {
     <div className="h-full w-full">
       <Canvas
         camera={{ position: [0, 0, 7], fov: 60 }}
+        dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}>
         <Scene />
