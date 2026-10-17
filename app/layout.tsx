@@ -1,10 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import {
-  DM_Sans,
-  DM_Mono,
-  Noto_Sans_Devanagari,
-  Playfair_Display,
-} from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { business } from "@/data/business";
@@ -15,39 +10,29 @@ import {
   organizationJsonLd,
 } from "@/lib/site";
 
-// Accent font for small labels/numbers only — not needed for first paint.
-const monoFont = DM_Mono({
-  variable: "--font-mono",
+// Variable sans: a single file covers every weight used on the site.
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["400", "500"],
   display: "swap",
-  preload: false,
 });
 
-// Variable fonts: one file per style instead of one per weight.
-const bodyFont = DM_Sans({
-  variable: "--font-body",
+// Small labels and figures only — not needed for first paint.
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
   preload: false,
 });
 
-const headingSerif = Playfair_Display({
-  variable: "--font-heading",
+// Editorial italic accent word in headlines. Preloaded (one small file) so
+// the swap can't re-wrap headlines and shift the layout.
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: "400",
+  style: "italic",
   display: "swap",
-  // Text renders immediately with a metric-matched fallback; skip the
-  // high-priority preload so it doesn't compete with the HTML/LCP.
-  preload: false,
-});
-
-// Only used for Devanagari glyphs; the browser fetches it on demand.
-const nepaliFont = Noto_Sans_Devanagari({
-  variable: "--font-nepali",
-  subsets: ["devanagari"],
-  display: "swap",
-  preload: false,
 });
 
 const title = `${business.company.name} — Fiber Internet & Cable TV in Sabaila, Nepal`;
@@ -107,8 +92,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#080f0a" },
-    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#070b0e" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f8f7" },
   ],
 };
 
@@ -121,14 +106,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${headingSerif.variable} ${bodyFont.variable} ${monoFont.variable} ${nepaliFont.variable} antialiased`}
+      className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable} dark`}
     >
-      <body suppressHydrationWarning className="min-h-dvh">
+      <body className="min-h-dvh">
         <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+          <style>{`[data-reveal],[data-reveal] [data-stagger]{opacity:1!important;transform:none!important}`}</style>
         </noscript>
         <JsonLd data={organizationJsonLd} />
-        <div className="rcn-bg" aria-hidden="true" />
         <Providers>{children}</Providers>
       </body>
     </html>

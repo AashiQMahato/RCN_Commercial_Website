@@ -1,317 +1,225 @@
-export type RcnLang = "en" | "np";
+/**
+ * Single source of truth for RCN business information.
+ *
+ * Every figure shown on the site (prices, speeds, areas, statistics, contact
+ * details) must come from this file so that pages can never contradict each
+ * other. Only publish figures the business has confirmed.
+ */
 
-export type RcnLocalized<T> = {
-  en: T;
-  np: T;
-};
+export type PlanId = "basic" | "standard" | "premium";
 
-export type RcnPlanId = "basic" | "standard" | "premium";
-
-export type RcnPlan = {
-  id: RcnPlanId;
-  name: RcnLocalized<string>;
+export type Plan = {
+  id: PlanId;
+  name: string;
+  tagline: string;
   speedMbps: number;
+  uploadMbps: number;
   monthlyPrice: number;
-  features: RcnLocalized<string[]>;
+  devices: string;
+  /** Visually highlighted as the most popular plan. */
   highlight?: boolean;
+  badge?: string;
+  features: string[];
 };
 
-export type RcnStat = {
-  id: "speed" | "uptime" | "customers" | "areas";
+export type Stat = {
+  id: string;
   value: number;
-  suffix: string;
-  label: RcnLocalized<string>;
+  /** Text rendered before/after the number, e.g. "+" or " Mbps". */
+  prefix?: string;
+  suffix?: string;
+  label: string;
+  /** Count-up animation only makes sense for quantities, not years. */
+  animate: boolean;
 };
 
-export type RcnBusiness = {
-  company: {
-    name: string;
-    shortName: string;
-    establishedYear: number;
-    location: string;
-    primaryServiceArea: string;
-  };
-  contact: {
-    phone: string;
-    email: string;
-    address: string;
-    googleMapsUrl?: string;
-    googleMapsEmbedUrl?: string;
-    whatsappPhoneE164?: string;
-  };
-  pricing: {
-    currencyCode: "NPR";
-    yearlyDiscountPercent: 15;
-  };
-  plans: RcnPlan[];
-  stats: RcnStat[];
-  features: Array<{
-    id:
-      | "high-speed-internet"
-      | "24-7-support"
-      | "transparent-pricing"
-      | "fiber-reliability"
-      | "business-plans"
-      | "fast-installation";
-    title: RcnLocalized<string>;
-  }>;
-  howItWorks: Array<{
-    id: "choose-plan" | "install" | "go-live";
-    title: RcnLocalized<string>;
-    description: RcnLocalized<string>;
-  }>;
-  coverage: {
-    shortNote: RcnLocalized<string>;
-  };
-  testimonials: Array<{
-    name: string;
-    quote: string;
-    source?: string;
-  }>;
-  faq: Array<{
-    question: RcnLocalized<string>;
-    answer: RcnLocalized<string>;
-  }>;
+export type AreaStatus = "hq" | "active" | "expanding";
+
+export type ServiceArea = {
+  id: string;
+  name: string;
+  status: AreaStatus;
 };
 
-export const business: RcnBusiness = {
+const ESTABLISHED_YEAR = 2010;
+const YEARLY_DISCOUNT_PERCENT = 15;
+
+export const business = {
   company: {
     name: "Raghunathpur Cable Network",
     shortName: "RCN",
-    establishedYear: 2010,
-    location: "Nepal",
+    establishedYear: ESTABLISHED_YEAR,
+    services: "Fiber internet & cable TV",
+    location: "Sabaila-12, Raghunathpur",
+    district: "Dhanusha",
+    province: "Madhesh Province",
+    country: "Nepal",
     primaryServiceArea: "Sabaila-12, Raghunathpur and 25+ surrounding areas",
+    chairperson: {
+      name: "Fulgen Kumar Mahato",
+      title: "Founder & Chairperson",
+    },
   },
+
   contact: {
     phone: "+977 9801663644",
+    phoneHref: "tel:+9779801663644",
+    whatsappE164: "9779801663644",
     email: "raghunathpurcable2010@gmail.com",
-    address: "Sabaila-12, Raghunathpur, Nepal",
+    address: "Sabaila-12, Raghunathpur, Dhanusha, Nepal",
     googleMapsUrl:
       "https://www.google.com/maps?q=Sabaila-12%2C%20Raghunathpur%2C%20Nepal",
     googleMapsEmbedUrl:
       "https://www.google.com/maps?q=Raghunathpur%2C%20Cable%2C%20Network%2C%20Pvt.%2C%20Ltd.&output=embed",
-    whatsappPhoneE164: "9779801663644",
+    officeHours: "Office open Mon–Sat, 9am–6pm",
+    supportHours: "Phone & WhatsApp support 24/7, including public holidays",
   },
+
   pricing: {
-    currencyCode: "NPR",
-    yearlyDiscountPercent: 15,
+    currency: "NPR",
+    yearlyDiscountPercent: YEARLY_DISCOUNT_PERCENT,
   },
+
   plans: [
     {
       id: "basic",
-      name: {
-        en: "Basic",
-        // TODO: add real data
-        np: "Basic",
-      },
+      name: "Basic",
+      tagline: "Everyday browsing and HD streaming",
       speedMbps: 50,
+      uploadMbps: 25,
       monthlyPrice: 499,
-      features: {
-        en: [
-          "Unlimited data usage",
-          "HD streaming support",
-          "Free installation",
-          "Standard router setup",
-        ],
-        // TODO: add real data
-        np: [
-          "Unlimited data usage",
-          "HD streaming support",
-          "Free installation",
-          "Standard router setup",
-        ],
-      },
+      devices: "3–5 devices",
+      features: [
+        "Unlimited data, no FUP",
+        "HD streaming on every screen",
+        "Free router & installation",
+        "24/7 phone & WhatsApp support",
+        "Static IP available as an add-on",
+      ],
     },
     {
       id: "standard",
-      name: {
-        en: "Standard",
-        // TODO: add real data
-        np: "Standard",
-      },
+      name: "Standard",
+      tagline: "The favourite for homes and work-from-home",
       speedMbps: 100,
+      uploadMbps: 50,
       monthlyPrice: 699,
+      devices: "6–10 devices",
       highlight: true,
-      features: {
-        en: [
-          "Unlimited data usage",
-          "4K streaming support",
-          "Priority 24/7 support",
-          "Enhanced Wi-Fi coverage",
-        ],
-        // TODO: add real data
-        np: [
-          "Unlimited data usage",
-          "4K streaming support",
-          "Priority 24/7 support",
-          "Enhanced Wi-Fi coverage",
-        ],
-      },
+      badge: "Most popular",
+      features: [
+        "Unlimited data, no FUP",
+        "4K streaming & online gaming",
+        "Free router & installation",
+        "Priority 24/7 support",
+        "Enhanced Wi-Fi coverage",
+        "Cable TV bundle available",
+      ],
     },
     {
       id: "premium",
-      name: {
-        en: "Premium",
-        // TODO: add real data
-        np: "Premium",
-      },
+      name: "Premium",
+      tagline: "For power users and home offices",
       speedMbps: 200,
+      uploadMbps: 100,
       monthlyPrice: 999,
-      features: {
-        en: [
-          "Unlimited data usage",
-          "Multi-device streaming",
-          "Work-from-home optimized",
-        ],
-        // TODO: add real data
-        np: [
-          "Unlimited data usage",
-          "Multi-device streaming",
-          "Work-from-home optimized",
-        ],
-      },
+      devices: "10+ devices",
+      features: [
+        "Unlimited data, no FUP",
+        "Multi-screen 4K streaming",
+        "Free router & installation",
+        "Dedicated priority support",
+        "Static IP included",
+        "Cable TV bundle included",
+      ],
     },
-  ],
+  ] satisfies readonly Plan[],
+
   stats: [
     {
-      id: "speed",
-      value: 200,
-      suffix: " Mbps",
-      label: {
-        en: "Peak Speed",
-        // TODO: add real data
-        np: "Peak Speed",
-      },
-    },
-    {
-      id: "uptime",
-      value: 99.9,
-      suffix: "%",
-      label: {
-        en: "Network Uptime",
-        // TODO: add real data
-        np: "Network Uptime",
-      },
+      id: "since",
+      value: ESTABLISHED_YEAR,
+      prefix: "Since ",
+      label: "Serving our community",
+      animate: false,
     },
     {
       id: "customers",
       value: 10_000,
       suffix: "+",
-      label: {
-        en: "Customers",
-        // TODO: add real data
-        np: "Customers",
-      },
+      label: "Connected customers",
+      animate: true,
     },
     {
       id: "areas",
       value: 25,
       suffix: "+",
-      label: {
-        en: "Areas Covered",
-        // TODO: add real data
-        np: "Areas Covered",
-      },
-    },
-  ],
-  features: [
-    {
-      id: "high-speed-internet",
-      title: {
-        en: "High-speed Internet",
-        // TODO: add real data
-        np: "High-speed Internet",
-      },
+      label: "Areas served",
+      animate: true,
     },
     {
-      id: "24-7-support",
-      title: {
-        en: "24/7 Customer Support",
-        // TODO: add real data
-        np: "24/7 Customer Support",
-      },
+      id: "speed",
+      value: 200,
+      suffix: " Mbps",
+      label: "Fastest home plan",
+      animate: true,
     },
-    {
-      id: "transparent-pricing",
-      title: {
-        en: "Transparent Pricing",
-        // TODO: add real data
-        np: "Transparent Pricing",
-      },
-    },
-    {
-      id: "fiber-reliability",
-      title: {
-        en: "Fiber-grade Reliability",
-        // TODO: add real data
-        np: "Fiber-grade Reliability",
-      },
-    },
-    {
-      id: "business-plans",
-      title: {
-        en: "Business Plans",
-        // TODO: add real data
-        np: "Business Plans",
-      },
-    },
-    {
-      id: "fast-installation",
-      title: {
-        en: "Fast Installation",
-        // TODO: add real data
-        np: "Fast Installation",
-      },
-    },
-  ],
-  howItWorks: [
-    {
-      id: "choose-plan",
-      title: {
-        en: "Choose your plan",
-        // TODO: add real data
-        np: "Choose your plan",
-      },
-      description: {
-        en: "Pick a speed tier that fits your household or business.",
-        // TODO: add real data
-        np: "Pick a speed tier that fits your household or business.",
-      },
-    },
-    {
-      id: "install",
-      title: {
-        en: "We install & activate",
-        // TODO: add real data
-        np: "We install & activate",
-      },
-      description: {
-        en: "Share your location details and we’ll schedule installation.",
-        // TODO: add real data
-        np: "Share your location details and we’ll schedule installation.",
-      },
-    },
-    {
-      id: "go-live",
-      title: {
-        en: "Go live",
-        // TODO: add real data
-        np: "Go live",
-      },
-      description: {
-        en: "Get online and reach out anytime for support.",
-        // TODO: add real data
-        np: "Get online and reach out anytime for support.",
-      },
-    },
-  ],
-  coverage: {
-    shortNote: {
-      en: "Share your ward/landmark and we’ll confirm coverage.",
-      // TODO: add real data
-      np: "Share your ward/landmark and we’ll confirm coverage.",
-    },
+  ] satisfies readonly Stat[],
+
+  /** Areas listed on the coverage page. Exact streets are confirmed per enquiry. */
+  serviceAreas: [
+    { id: "sabaila", name: "Sabaila-12", status: "hq" },
+    { id: "raghunathpur", name: "Raghunathpur", status: "hq" },
+    { id: "gaur", name: "Gaur", status: "active" },
+    { id: "chandrapur", name: "Chandrapur", status: "active" },
+    { id: "laxmipur", name: "Laxmipur", status: "active" },
+    { id: "pheta", name: "Pheta", status: "active" },
+    { id: "dewahi-gonahi", name: "Dewahi Gonahi", status: "active" },
+    { id: "mirchaiya", name: "Mirchaiya area", status: "active" },
+    { id: "rajbiraj", name: "Rajbiraj corridor", status: "expanding" },
+    { id: "dhangadhimai", name: "Dhangadhimai", status: "expanding" },
+  ] satisfies readonly ServiceArea[],
+
+  installation: {
+    typicalDays: "1–3 business days",
+    remoteDays: "up to 5 business days",
   },
-  testimonials: [],
-  faq: [],
+
+  cableTv: {
+    channels: "100+ channels, including national and regional Nepali channels",
+  },
+
+  paymentMethods: ["eSewa", "Khalti", "Bank transfer", "Cash at our office"],
 };
+
+export type Business = typeof business;
+
+/* ── Derived helpers (keep maths in one place) ─────────────────────────── */
+
+export function yearlyTotal(plan: Pick<Plan, "monthlyPrice">) {
+  return Math.round(
+    plan.monthlyPrice * 12 * (1 - YEARLY_DISCOUNT_PERCENT / 100),
+  );
+}
+
+export function yearlyMonthlyEquivalent(plan: Pick<Plan, "monthlyPrice">) {
+  return Math.round(yearlyTotal(plan) / 12);
+}
+
+export function yearlySaving(plan: Pick<Plan, "monthlyPrice">) {
+  return plan.monthlyPrice * 12 - yearlyTotal(plan);
+}
+
+export function formatNpr(amount: number) {
+  return `NPR ${amount.toLocaleString("en-US")}`;
+}
+
+export function whatsappUrl(message: string) {
+  return `https://wa.me/${business.contact.whatsappE164}?text=${encodeURIComponent(message)}`;
+}
+
+export function mailtoUrl(subject: string, body = "") {
+  const params = new URLSearchParams({ subject, body });
+  // URLSearchParams encodes spaces as "+", which mail clients show literally.
+  return `mailto:${business.contact.email}?${params.toString().replace(/\+/g, "%20")}`;
+}
