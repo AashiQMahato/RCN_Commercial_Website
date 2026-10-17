@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { business } from "@/data/business";
+import { business, formatNpr } from "@/data/business";
 
 export const SITE_URL = "https://raghunathpurcable.com.np";
 
 export const SITE_DESCRIPTION =
-  "Raghunathpur Cable Network (RCN) is a fiber internet and cable TV provider in Sabaila-12, Raghunathpur (Madhesh Province, Nepal), serving 25+ areas since 2010 with unlimited data plans from NPR 499/month.";
+  "Raghunathpur Cable Network (RCN) is a fiber internet and cable TV provider in Sabaila-12, Raghunathpur (Dhanusha, Madhesh Province, Nepal), serving 25+ areas since 2010 with unlimited data plans from NPR 499/month.";
 
 export const OG_IMAGE = {
   url: "/opengraph-image",
@@ -22,7 +22,10 @@ export const SITE_ROUTES = [
   { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
 ] as const;
 
-/** schema.org structured data describing the business (rendered as JSON-LD). */
+/**
+ * schema.org structured data describing the business (rendered as JSON-LD).
+ * Only properties published elsewhere on the site are included.
+ */
 export const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "InternetServiceProvider",
@@ -36,21 +39,19 @@ export const organizationJsonLd = {
   foundingDate: String(business.company.establishedYear),
   telephone: business.contact.phone.replace(/\s/g, ""),
   email: business.contact.email,
-  priceRange: "NPR 499 – NPR 999",
-  currenciesAccepted: "NPR",
+  priceRange: `${formatNpr(Math.min(...business.plans.map((p) => p.monthlyPrice)))} – ${formatNpr(Math.max(...business.plans.map((p) => p.monthlyPrice)))} per month`,
+  currenciesAccepted: business.pricing.currency,
+  paymentAccepted: business.paymentMethods.join(", "),
   address: {
     "@type": "PostalAddress",
     streetAddress: "Sabaila-12",
     addressLocality: "Raghunathpur",
-    addressRegion: "Madhesh Province",
+    addressRegion: `${business.company.district}, ${business.company.province}`,
     addressCountry: "NP",
   },
-  areaServed: [
-    "Sabaila",
-    "Raghunathpur",
-    "Dhanusha",
-    "Madhesh Province",
-  ].map((name) => ({ "@type": "Place", name })),
+  areaServed: business.serviceAreas
+    .filter((a) => a.status !== "expanding")
+    .map((a) => ({ "@type": "Place", name: a.name })),
   hasMap: business.contact.googleMapsUrl,
   openingHoursSpecification: {
     "@type": "OpeningHoursSpecification",
@@ -61,10 +62,9 @@ export const organizationJsonLd = {
       "Thursday",
       "Friday",
       "Saturday",
-      "Sunday",
     ],
-    opens: "00:00",
-    closes: "23:59",
+    opens: "09:00",
+    closes: "18:00",
   },
   contactPoint: {
     "@type": "ContactPoint",
@@ -72,13 +72,26 @@ export const organizationJsonLd = {
     email: business.contact.email,
     contactType: "customer support",
     areaServed: "NP",
-    availableLanguage: ["English", "Nepali"],
+    hoursAvailable: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "00:00",
+      closes: "23:59",
+    },
   },
   makesOffer: business.plans.map((plan) => ({
     "@type": "Offer",
-    name: `${plan.name.en} ${plan.speedMbps} Mbps fiber internet`,
+    name: `${plan.name} ${plan.speedMbps} Mbps fiber internet`,
     price: plan.monthlyPrice,
-    priceCurrency: business.pricing.currencyCode,
+    priceCurrency: business.pricing.currency,
     url: `${SITE_URL}/plans`,
   })),
 };
